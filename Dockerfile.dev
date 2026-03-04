@@ -1,0 +1,31 @@
+# syntax=docker/dockerfile:1
+
+ARG RUBY_VERSION=3.4.8
+FROM docker.io/library/ruby:$RUBY_VERSION-slim
+
+# Install system dependencies
+# - build-essential: compiles native gem extensions (pg, etc.)
+# - libpq-dev: PostgreSQL client headers required by the pg gem
+# - curl: useful for healthchecks and debugging inside the container
+RUN apt-get update -qq && \
+    apt-get install --no-install-recommends -y \
+    build-essential \
+    libpq-dev \
+    libyaml-dev \
+    curl \
+    && rm -rf /var/lib/apt/lists /var/cache/apt/archives
+
+WORKDIR /rails
+
+# Copy dependency manifest first — Docker caches this layer
+# so bundle install only reruns when Gemfile actually changes
+COPY Gemfile Gemfile.lock ./
+
+RUN bundle install
+
+# Copy application code
+COPY . .
+
+EXPOSE 3000
+
+CMD ["bundle", "exec", "rails", "server", "-b", "0.0.0.0"]
