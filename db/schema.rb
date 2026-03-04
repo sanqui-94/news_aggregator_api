@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_04_170934) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_04_175140) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -25,6 +25,65 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_04_170934) do
     t.string "url", null: false
     t.index ["source_id", "external_id"], name: "index_articles_on_source_id_and_external_id", unique: true
     t.index ["source_id", "published_at"], name: "index_articles_on_source_id_and_published_at"
+  end
+
+  create_table "default_feed_sources", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "source_id", null: false
+    t.index ["source_id"], name: "index_default_feed_sources_on_source_id", unique: true
+  end
+
+  create_table "feed_sources", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "feed_id", null: false
+    t.bigint "source_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["feed_id", "source_id"], name: "index_feed_sources_on_feed_id_and_source_id", unique: true
+    t.index ["feed_id"], name: "index_feed_sources_on_feed_id"
+    t.index ["source_id"], name: "index_feed_sources_on_source_id"
+  end
+
+  create_table "feeds", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "name", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.index ["user_id"], name: "index_feeds_on_user_id"
+  end
+
+  create_table "notifications", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.jsonb "data", default: {}, null: false
+    t.boolean "read", default: false, null: false
+    t.string "type", null: false
+    t.bigint "user_id", null: false
+    t.index ["user_id", "read"], name: "index_notifications_on_user_id_and_read"
+    t.index ["user_id"], name: "index_notifications_on_user_id"
+  end
+
+  create_table "source_suggestions", force: :cascade do |t|
+    t.text "admin_notes"
+    t.datetime "created_at", null: false
+    t.text "description", null: false
+    t.datetime "reviewed_at"
+    t.bigint "reviewed_by_id"
+    t.string "status", default: "pending", null: false
+    t.datetime "updated_at", null: false
+    t.string "url", null: false
+    t.bigint "user_id"
+    t.index ["reviewed_by_id"], name: "index_source_suggestions_on_reviewed_by_id"
+    t.index ["status"], name: "index_source_suggestions_on_status"
+    t.index ["user_id"], name: "index_source_suggestions_on_user_id"
+  end
+
+  create_table "source_tags", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "source_id", null: false
+    t.bigint "tag_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["source_id", "tag_id"], name: "index_source_tags_on_source_id_and_tag_id", unique: true
+    t.index ["source_id"], name: "index_source_tags_on_source_id"
+    t.index ["tag_id"], name: "index_source_tags_on_tag_id"
   end
 
   create_table "sources", force: :cascade do |t|
@@ -62,4 +121,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_04_170934) do
   end
 
   add_foreign_key "articles", "sources", on_delete: :cascade
+  add_foreign_key "default_feed_sources", "sources", on_delete: :cascade
+  add_foreign_key "feed_sources", "feeds", on_delete: :cascade
+  add_foreign_key "feed_sources", "sources", on_delete: :cascade
+  add_foreign_key "feeds", "users", on_delete: :cascade
+  add_foreign_key "notifications", "users", on_delete: :cascade
+  add_foreign_key "source_suggestions", "users", column: "reviewed_by_id", on_delete: :nullify
+  add_foreign_key "source_suggestions", "users", on_delete: :nullify
+  add_foreign_key "source_tags", "sources", on_delete: :cascade
+  add_foreign_key "source_tags", "tags", on_delete: :restrict
 end
