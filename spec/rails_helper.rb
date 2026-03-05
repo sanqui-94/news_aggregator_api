@@ -6,6 +6,7 @@ require_relative '../config/environment'
 abort("The Rails environment is running in production mode!") if Rails.env.production?
 
 require 'rspec/rails'
+require 'rspec/autorun'
 
 # Auto-require everything in spec/support — shared contexts, custom matchers,
 # helper modules live here and are loaded once for the whole suite
